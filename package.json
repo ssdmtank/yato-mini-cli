@@ -1,0 +1,43 @@
+{
+  "name": "yato-mini-cli",
+  "version": "0.0.1",
+  "description": "taro min ci",
+  "main": "lib/index.js",
+  "bin": {
+    "yato-mini-cli": "./bin/cli.js"
+  },
+  "scripts": {
+    "dev": "rollup -w -c",
+    "build": "rollup -c"
+  },
+  "engines": {
+    "node": ">=v12"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ssdmtank/yato-mini-cli.git"
+  },
+  "author": "King Win",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ssdmtank/yato-mini-cli/issues"
+  },
+  "homepage": "https://github.com/ssdmtank/yato-mini-cli#readme",
+  "keywords": [
+    "gitlab",
+    "wechat",
+    "miniprogram",
+    "taro",
+    "ci",
+    "deploy"
+  ],
+  "dependencies": {
+    "commander": "^9.0.0",
+    "miniprogram-ci": "^1.8.0",
+    "ora": "^5.0.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-json": "^4.1.0",
+    "rollup": "^2.68.0"
+  }
+}
