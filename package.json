@@ -1,62 +1,70 @@
 {
-  "name": "yato-mini-cli",
-  "version": "0.0.1",
-  "description": "taro min ci",
-  "main": "lib/index.js",
-  "bin": {
-    "yato-mini-cli": "./bin/cli.js"
-  },
-  "scripts": {
-    "dev": "rollup -w -c",
-    "build": "rollup -c",
-    "prepare": "husky install",
-    "commit": "git add . && git-cz",
-    "changelog": "conventional-changelog -p -i CHANGELOG.md -s -r 0"
-  },
-  "engines": {
-    "node": ">=v12"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ssdmtank/yato-mini-cli.git"
-  },
-  "author": "King Win",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/ssdmtank/yato-mini-cli/issues"
-  },
-  "homepage": "https://github.com/ssdmtank/yato-mini-cli#readme",
-  "keywords": [
-    "gitlab",
-    "wechat",
-    "miniprogram",
-    "taro",
-    "ci",
-    "deploy"
-  ],
-  "dependencies": {
-    "commander": "^9.0.0",
-    "miniprogram-ci": "^1.8.0",
-    "ora": "^5.0.0"
-  },
-  "devDependencies": {
-    "@commitlint/cli": "^16.2.1",
-    "@commitlint/cz-commitlint": "^16.2.1",
-    "@rollup/plugin-json": "^4.1.0",
-    "commitizen": "^4.2.4",
-    "conventional-changelog-cli": "^2.2.2",
-    "eslint": "^8.9.0",
-    "husky": "^7.0.4",
-    "lint-staged": "^12.3.4",
-    "prettier": "^2.5.1",
-    "rollup": "^2.68.0"
-  },
-  "config": {
-    "commitizen": {
-      "path": "@commitlint/cz-commitlint"
+    "name": "yato-mini-cli",
+    "version": "0.0.1",
+    "description": "taro min ci",
+    "main": "lib/index.js",
+    "bin": {
+        "yato-mini-cli": "./bin/cli.js"
+    },
+    "scripts": {
+        "dev": "rollup -w -c",
+        "build": "rollup -c",
+        "prepare": "husky install",
+        "commit": "git add . && git-cz",
+        "changelog": "conventional-changelog -p -i CHANGELOG.md -s -r 0"
+    },
+    "engines": {
+        "node": ">=v12"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/ssdmtank/yato-mini-cli.git"
+    },
+    "author": "King Win",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/ssdmtank/yato-mini-cli/issues"
+    },
+    "homepage": "https://github.com/ssdmtank/yato-mini-cli#readme",
+    "keywords": [
+        "gitlab",
+        "wechat",
+        "miniprogram",
+        "taro",
+        "ci",
+        "deploy"
+    ],
+    "dependencies": {
+        "commander": "^9.0.0",
+        "form-data": "^4.0.0",
+        "miniprogram-ci": "^1.8.0",
+        "node-fetch": "2",
+        "ora": "^5.0.0"
+    },
+    "devDependencies": {
+        "@commitlint/cli": "^16.2.1",
+        "@commitlint/cz-commitlint": "^16.2.1",
+        "@rollup/plugin-commonjs": "^21.0.2",
+        "@rollup/plugin-json": "^4.1.0",
+        "commitizen": "^4.2.4",
+        "conventional-changelog-cli": "^2.2.2",
+        "eslint": "^8.9.0",
+        "husky": "^7.0.4",
+        "lint-staged": "^12.3.4",
+        "prettier": "^2.5.1",
+        "rollup": "^2.68.0",
+        "rollup-plugin-copy": "^3.4.0",
+        "webpack-merge": "^5.8.0"
+    },
+    "config": {
+        "commitizen": {
+            "path": "@commitlint/cz-commitlint"
+        }
+    },
+    "lint-staged": {
+        "*.js": [
+            "eslint --fix",
+            "prettier --write"
+        ]
     }
-  },
-  "lint-staged": {
-    "*.js": ["eslint --fix", "prettier --write"]
-  }
 }

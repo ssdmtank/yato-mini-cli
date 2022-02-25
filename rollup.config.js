@@ -1,4 +1,6 @@
 const path = require('path')
+import commonjs from '@rollup/plugin-commonjs'
+import copy from 'rollup-plugin-copy'
 const json = require('@rollup/plugin-json')
 
 module.exports = {
@@ -10,5 +12,14 @@ module.exports = {
   },
   plugins: [
     json(), //配置插件 - 将json转换为ES6模块
+    commonjs(),
+    copy({
+      targets: [
+        {
+          src: 'yatoci.config.js',
+          dest: 'bin/',
+        },
+      ],
+    }),
   ],
 }
