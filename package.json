@@ -8,7 +8,10 @@
   },
   "scripts": {
     "dev": "rollup -w -c",
-    "build": "rollup -c"
+    "build": "rollup -c",
+    "prepare": "husky install",
+    "commit": "git add . && git-cz",
+    "changelog": "conventional-changelog -p -i CHANGELOG.md -s -r 0"
   },
   "engines": {
     "node": ">=v12"
@@ -37,7 +40,23 @@
     "ora": "^5.0.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^16.2.1",
+    "@commitlint/cz-commitlint": "^16.2.1",
     "@rollup/plugin-json": "^4.1.0",
+    "commitizen": "^4.2.4",
+    "conventional-changelog-cli": "^2.2.2",
+    "eslint": "^8.9.0",
+    "husky": "^7.0.4",
+    "lint-staged": "^12.3.4",
+    "prettier": "^2.5.1",
     "rollup": "^2.68.0"
+  },
+  "config": {
+    "commitizen": {
+      "path": "@commitlint/cz-commitlint"
+    }
+  },
+  "lint-staged": {
+    "*.js": ["eslint --fix", "prettier --write"]
   }
 }
