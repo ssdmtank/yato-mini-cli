@@ -16,7 +16,7 @@ module.exports = {
     copy({
       targets: [
         {
-          src: 'yatoci.config.js',
+          src: 'base.config.js',
           dest: 'bin/',
         },
       ],

@@ -9,7 +9,7 @@ program
 
 program
   .command('deploy')
-  .option('--env [value]', '环境类型')
+  .option('--env [value]', '环境类型release/prod/pre')
   .option('--ver [value]', '发布版本号')
   .option('--desc [value]', '发布简介')
   .description('发布小程序')

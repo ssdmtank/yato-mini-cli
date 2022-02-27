@@ -4,9 +4,11 @@
 var ora = require('ora')
 var path = require('path')
 var fs = require('fs')
+var webpackMerge = require('webpack-merge')
+var spawn = require('cross-spawn')
+require('miniprogram-ci')
 require('node-fetch')
 require('form-data')
-var webpackMerge = require('webpack-merge')
 
 function _interopDefaultLegacy(e) {
   return e && typeof e === 'object' && 'default' in e ? e : { default: e }
@@ -15,6 +17,7 @@ function _interopDefaultLegacy(e) {
 var ora__default = /*#__PURE__*/ _interopDefaultLegacy(ora)
 var path__default = /*#__PURE__*/ _interopDefaultLegacy(path)
 var fs__default = /*#__PURE__*/ _interopDefaultLegacy(fs)
+var spawn__default = /*#__PURE__*/ _interopDefaultLegacy(spawn)
 
 var name = 'yato-mini-cli'
 var version = '0.0.1'
@@ -46,6 +49,7 @@ var homepage = 'https://github.com/ssdmtank/yato-mini-cli#readme'
 var keywords = ['gitlab', 'wechat', 'miniprogram', 'taro', 'ci', 'deploy']
 var dependencies = {
   commander: '^9.0.0',
+  'cross-spawn': '^7.0.3',
   'form-data': '^4.0.0',
   'miniprogram-ci': '^1.8.0',
   'node-fetch': '2',
@@ -97,18 +101,51 @@ var packageJson = {
  * 日志工具
  */
 const Log = {
-  info(msg) {
-    ora__default['default']().info(msg)
+  // Log唯一的实例
+  instance: ora__default['default'](),
+  loading(msg) {
+    this.instance = ora__default['default'](msg).start()
   },
-  warn(msg) {
-    ora__default['default']().warn(msg)
+  stop() {
+    this.instance = this.instance.stop()
+  },
+  info(msg) {
+    this.instance = this.instance.info(msg)
+  },
+  succeed(msg) {
+    this.instance = this.instance.succeed(msg)
   },
   error(msg) {
-    ora__default['default']().fail(msg)
+    this.instance = this.instance.fail(msg)
   },
 }
 
-const CONFIG_FILE_NAME = 'yatoci.config.js'
+/**
+ * 执行脚本
+ * @param { string } opt.command 主指令
+ * @param { Array} opt.args 参数数组
+ * @param { Boolean } opt.needResp 是否需要在当前进程输出
+ * @param { string } opt.desc 脚本简要
+ */
+const execCmd = ({ command, args, needResp, desc }) => {
+  Log.loading(`正在${desc}\n`)
+  const data = spawn__default['default'].sync(command, args, {
+    // 是否需要在当前进程输出
+    stdio: needResp ? 'pipe' : 'inherit',
+    cwd: process.cwd(),
+  })
+  if (data.status !== 0) {
+    Log.error(`执行命令${command}异常`)
+    // eslint-disable-next-line no-console
+    console.error(data.error)
+    process.exit(1)
+  }
+  Log.succeed(`${desc}成功\n`)
+  return data
+}
+
+const USER_CONFIG_NAME = 'yatoci.config.js'
+const LOCAL_CONFIG_NAME = 'base.config.js'
 
 /**
  * 合并配置文件
@@ -116,19 +153,19 @@ const CONFIG_FILE_NAME = 'yatoci.config.js'
  */
 const mergeConfig = () => {
   // 用户配置文件
-  const targetPath = path__default['default'].join(process.cwd(), CONFIG_FILE_NAME)
+  const targetPath = path__default['default'].join(process.cwd(), USER_CONFIG_NAME)
   // 校验用户配置是否存在
   const isExist = fs__default['default'].existsSync(targetPath)
 
   if (!isExist) {
-    Log.error('配置文件不存在，请在根目录创建配置文件yatoci.config.js')
+    Log.error(`配置文件不存在，请在根目录创建配置文件${USER_CONFIG_NAME}`)
     process.exit(1)
   }
   // 本地配置文件
   const localPath = path__default['default'].resolve(
-    path__default['default'].join(__dirname, CONFIG_FILE_NAME)
+    path__default['default'].join(__dirname, LOCAL_CONFIG_NAME)
   )
-  return webpackMerge.merge(require(targetPath), require(localPath))
+  return webpackMerge.merge(require(localPath), require(targetPath))
 }
 
 /**
@@ -136,27 +173,19 @@ const mergeConfig = () => {
  * @param {*} cmdOpt
  */
 const deploy = async (cmdOpt) => {
-  // 读取配置文件
-  mergeConfig()
-  // 安装依赖及编译
-
-  // 上传微信并生成预览
-
+  // step1 读取配置文件
+  // TODO 合并命令行的配置
+  const config = mergeConfig()
+  // step2 安装依赖及编译
+  if (config.preCommand && config.preCommand.length > 0) {
+    for (const item of config.preCommand) {
+      execCmd(item)
+    }
+  }
+  // step3 上传微信并生成预览
+  //   const qrImgUrl = wxFlow(config)
   // 推送钉钉提醒
-
   // 文件长传接口
-  // https://bms.hanyuan.vip/hy-thirdpart/common/upload/file?timeNow=1645806479693
-  //
-  //   const spinner = ora('Loading unicorns').start()
-
-  //   setTimeout(() => {
-  //     spinner.color = 'yellow'
-  //     spinner.text = 'Loading rainbows'
-  //   }, 1000)
-  //   spinner.succeed()
-  //   spinner.fail()
-  //   spinner.warn()
-  //   spinner.info()
 }
 
 const { Command } = require('commander')
@@ -168,7 +197,7 @@ program
 
 program
   .command('deploy')
-  .option('--env [value]', '环境类型')
+  .option('--env [value]', '环境类型release/prod/pre')
   .option('--ver [value]', '发布版本号')
   .option('--desc [value]', '发布简介')
   .description('发布小程序')
