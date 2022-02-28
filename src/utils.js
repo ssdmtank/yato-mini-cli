@@ -1,5 +1,12 @@
 import ora from 'ora'
 import spawn from 'cross-spawn'
+import os from 'os'
+import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+import 'dayjs/locale/zh-cn'
+dayjs.locale('zh-cn')
+dayjs.extend(relativeTime)
+
 /**
  * 日志工具
  */
@@ -59,3 +66,33 @@ export const getGitBranchName = () => {
   })
   return data.stdout.toString().trim()
 }
+
+/**
+ * 获取feat/fix/refactor 开头的times次提交
+ * @param {*} times 次数
+ */
+export const getGitPrevCommitMsg = (times = 5) => {
+  const data = execCmd({
+    command: 'git',
+    args: [
+      'log',
+      '--no-merges',
+      '-n',
+      `${times}`,
+      '--grep',
+      'feat\\|fix\\|refactor',
+      '--pretty=format:"* %s (@%cn #DATE<%cd>)"',
+    ],
+    needResp: true,
+    desc: '获取git提交记录',
+  })
+  const message = data.stdout.toString().trim()
+  message.replace(/#DATE<([^>]+)>/gi, (_, p1) => {
+    return new dayjs(p1).fromNow()
+  })
+  return message
+}
+
+export const getHostName = () => os.hostname()
+
+export const formatNowDate = (dateFormat) => new dayjs().format(dateFormat)

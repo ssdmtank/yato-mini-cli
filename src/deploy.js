@@ -1,9 +1,9 @@
-import ora from 'ora'
 import path from 'path'
 import fs from 'fs'
 import { merge } from 'webpack-merge'
 import { Log, execCmd } from './utils'
 import wxFlow from './wxFlow'
+import dingFlow from './dingFlow'
 
 const USER_CONFIG_NAME = 'yatoci.config.js'
 const LOCAL_CONFIG_NAME = 'base.config.js'
@@ -42,9 +42,10 @@ const deploy = async (cmdOpt) => {
     }
   }
   // step3 上传微信并生成预览
-  //   const qrImgUrl = wxFlow(config)
-  // 推送钉钉提醒
-  // 文件长传接口
+  const weappQRImgUrl = wxFlow(config)
+  // step4 推送钉钉提醒
+  Object.assign(config, { weappQRImgUrl })
+  dingFlow(config)
 }
 
 export default deploy

@@ -1,23 +1,33 @@
 #!/usr/bin/env node
 'use strict'
 
-var ora = require('ora')
 var path = require('path')
 var fs = require('fs')
 var webpackMerge = require('webpack-merge')
+var ora = require('ora')
 var spawn = require('cross-spawn')
-require('miniprogram-ci')
-require('node-fetch')
-require('form-data')
+var os = require('os')
+var dayjs = require('dayjs')
+var relativeTime = require('dayjs/plugin/relativeTime')
+require('dayjs/locale/zh-cn')
+var ci = require('miniprogram-ci')
+var fetch$1 = require('node-fetch')
+var FormData = require('form-data')
 
 function _interopDefaultLegacy(e) {
   return e && typeof e === 'object' && 'default' in e ? e : { default: e }
 }
 
-var ora__default = /*#__PURE__*/ _interopDefaultLegacy(ora)
 var path__default = /*#__PURE__*/ _interopDefaultLegacy(path)
 var fs__default = /*#__PURE__*/ _interopDefaultLegacy(fs)
+var ora__default = /*#__PURE__*/ _interopDefaultLegacy(ora)
 var spawn__default = /*#__PURE__*/ _interopDefaultLegacy(spawn)
+var os__default = /*#__PURE__*/ _interopDefaultLegacy(os)
+var dayjs__default = /*#__PURE__*/ _interopDefaultLegacy(dayjs)
+var relativeTime__default = /*#__PURE__*/ _interopDefaultLegacy(relativeTime)
+var ci__default = /*#__PURE__*/ _interopDefaultLegacy(ci)
+var fetch__default = /*#__PURE__*/ _interopDefaultLegacy(fetch$1)
+var FormData__default = /*#__PURE__*/ _interopDefaultLegacy(FormData)
 
 var name = 'yato-mini-cli'
 var version = '0.0.1'
@@ -50,6 +60,7 @@ var keywords = ['gitlab', 'wechat', 'miniprogram', 'taro', 'ci', 'deploy']
 var dependencies = {
   commander: '^9.0.0',
   'cross-spawn': '^7.0.3',
+  dayjs: '^1.10.8',
   'form-data': '^4.0.0',
   'miniprogram-ci': '^1.8.0',
   'node-fetch': '2',
@@ -96,6 +107,9 @@ var packageJson = {
     '*.js': ['eslint --fix', 'prettier --write'],
   },
 }
+
+dayjs__default['default'].locale('zh-cn')
+dayjs__default['default'].extend(relativeTime__default['default'])
 
 /**
  * 日志工具
@@ -144,6 +158,208 @@ const execCmd = ({ command, args, needResp, desc }) => {
   return data
 }
 
+/**
+ * @returns git分支名称
+ */
+const getGitBranchName = () => {
+  const data = execCmd({
+    command: 'git',
+    args: ['rev-parse', '--abbrev-ref', 'HEAD'],
+    desc: '查询git分支名称',
+    needResp: true,
+  })
+  return data.stdout.toString().trim()
+}
+
+/**
+ * 获取feat/fix/refactor 开头的times次提交
+ * @param {*} times 次数
+ */
+const getGitPrevCommitMsg = (times = 5) => {
+  const data = execCmd({
+    command: 'git',
+    args: [
+      'log',
+      '--no-merges',
+      '-n',
+      `${times}`,
+      '--grep',
+      'feat\\|fix\\|refactor',
+      '--pretty=format:"* %s (@%cn #DATE<%cd>)"',
+    ],
+    needResp: true,
+    desc: '获取git提交记录',
+  })
+  const message = data.stdout.toString().trim()
+  message.replace(/#DATE<([^>]+)>/gi, (_, p1) => {
+    return new dayjs__default['default'](p1).fromNow()
+  })
+  return message
+}
+
+const getHostName = () => os__default['default'].hostname()
+
+const formatNowDate = (dateFormat) => new dayjs__default['default']().format(dateFormat)
+
+/**
+ * 校验密钥
+ * @param {*} privateKeyPath
+ */
+const checkPrivateKey = (privateKeyPath) => {
+  if (fs__default['default'].existsSync()) {
+    Log.error(`${privateKeyPath}密钥文件不存在`)
+    process.exit(1)
+  }
+}
+
+/**
+ * 生成并校验版本号
+ * @param {*} ver
+ */
+const generateVersion = (ver) => {
+  // 假设分支是v + 版本号
+  const version = ver || getGitBranchName().replace('v', '')
+  // 校验版本号
+  if (!/^([1-9]\d|[1-9])(.([1-9]\d|\d)){2}$/.test(version)) {
+    Log.error(`版本号 ${version} 不符合规范，请检查你的分支名或配置的版本号的格式`)
+    process.exit(1)
+  }
+}
+
+/**
+ * 上传图片
+ * 参考https://juejin.cn/post/6947700062461886477
+ * @param {*} imagePath  图片地址
+ * @returns 服务器图片路径
+ */
+const uploadImage = async ({ qrcodeOutputDest, uploadImagUrl }) => {
+  let qrcodePath = ''
+  if (!uploadImagUrl) {
+    Log.error('上传图片地址uploadImagUrl未配置')
+    return qrcodePath
+  }
+  Log.loading('上传预览版二维码图片...')
+  const form = new FormData__default['default']()
+  form.append('contentType', 'image/jpeg')
+  form.append(
+    'file',
+    fs__default['default'].createReadStream(
+      path__default['default'].join(__dirname, qrcodeOutputDest)
+    )
+  )
+  try {
+    const response = await fetch__default['default'](uploadImagUrl, {
+      method: 'POST',
+      body: form,
+    })
+    const res = await response.json()
+    qrcodePath = res.code === 200 && res.data
+    Log.succeed('上传图片成功')
+  } catch (error) {
+    Log.error(`上传图片失败 :${error}`)
+  }
+  return qrcodePath
+}
+
+/**
+ * 微信工作流
+ */
+const wxFlow = async (options) => {
+  const {
+    isExperience,
+    appid,
+    type,
+    projectPath,
+    privateKeyPath,
+    desc,
+    robot,
+    setting,
+    qrcodeFormat,
+    qrcodeOutputDest,
+    uploadImagUrl,
+    qrcodeImageUrl,
+  } = options
+  checkPrivateKey(privateKeyPath)
+  // 设定提交的版本
+  const version = generateVersion(options.version)
+  Log.loading(`正在上传${isExperience ? '体验版' : '预览版'}...`)
+  try {
+    const project = new ci__default['default'].Project({ appid, type, projectPath, privateKeyPath })
+    if (isExperience) {
+      await ci__default['default'].upload({ project, version, desc, robot, setting })
+    } else {
+      await ci__default['default'].preview({
+        project,
+        desc,
+        robot,
+        setting,
+        qrcodeFormat,
+        qrcodeOutputDest,
+      })
+    }
+    Log.succeed('上传成功')
+  } catch (error) {
+    Log.error(`上传失败: ${error}`)
+    process.exit(1)
+  }
+  // 设置二维码图片
+  return isExperience ? qrcodeImageUrl : uploadImage({ qrcodeOutputDest, uploadImagUrl })
+}
+
+const getGitInfo = () => {
+  // 获取feat/fix/refactor 开头的5次提交
+  const TIMES = 5
+  const commitMsgs = getGitPrevCommitMsg(5)
+  const branchName = getGitBranchName()
+  return `\n当前分支: **${branchName}**  \n  最近${TIMES}次commit:\n${commitMsgs}`
+}
+
+const buildTemplate = (options) => {
+  const { weappQRImgUrl, isExperience } = options
+  const uploadType = isExperience ? '体验版' : '预览版'
+  const gitInfo = getGitInfo()
+  const hostName = getHostName()
+  const wechatPart =
+    weappQRImgUrl &&
+    `## 微信${uploadType}${isExperience ? '' : '(有效期半小时)'}：![](${weappQRImgUrl})
+    `
+  return `# ${uploadType}小程序构建完成\n---\n构建时间: ${formatNowDate(
+    'MM-DD HH:mm'
+  )}  \n  构建机器：${hostName}  \n  ${gitInfo}  \n---\n${wechatPart || ''}`
+}
+
+/**
+ * 推送钉钉消息
+ * @param {*} options
+ */
+const dingFlow = async (options) => {
+  const template = buildTemplate(options)
+  const { isExperience, dingTalkUrl } = options
+  const postBody = {
+    msgtype: 'markdown',
+    markdown: {
+      title: '小程序构建测试已完成',
+      text: template,
+    },
+    at: {
+      isAtAll: isExperience,
+    },
+  }
+  Log.loading('正在推送钉钉消息...\n')
+  try {
+    await fetch(dingTalkUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(postBody),
+    })
+    Log.succeed('推送钉钉消息成功\n')
+  } catch (error) {
+    Log.error(`推送钉钉消息error ${error}`)
+  }
+}
+
 const USER_CONFIG_NAME = 'yatoci.config.js'
 const LOCAL_CONFIG_NAME = 'base.config.js'
 
@@ -183,9 +399,10 @@ const deploy = async (cmdOpt) => {
     }
   }
   // step3 上传微信并生成预览
-  //   const qrImgUrl = wxFlow(config)
-  // 推送钉钉提醒
-  // 文件长传接口
+  const weappQRImgUrl = wxFlow(config)
+  // step4 推送钉钉提醒
+  Object.assign(config, { weappQRImgUrl })
+  dingFlow(config)
 }
 
 const { Command } = require('commander')
