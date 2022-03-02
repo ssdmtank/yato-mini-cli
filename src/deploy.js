@@ -1,10 +1,9 @@
 import path from 'path'
 import fs from 'fs'
 import { merge } from 'webpack-merge'
-import { Log, execCmd } from './utils'
+import { execCmd, logger } from './utils'
 import wxFlow from './wxFlow'
 import dingFlow from './dingFlow'
-
 const USER_CONFIG_NAME = 'yatoci.config.js'
 const LOCAL_CONFIG_NAME = 'base.config.js'
 
@@ -19,7 +18,7 @@ const mergeConfig = () => {
   const isExist = fs.existsSync(targetPath)
 
   if (!isExist) {
-    Log.error(`配置文件不存在，请在根目录创建配置文件${USER_CONFIG_NAME}`)
+    logger.error(`配置文件不存在，请在根目录创建配置文件${USER_CONFIG_NAME}`)
     process.exit(1)
   }
   // 本地配置文件
@@ -41,8 +40,8 @@ const deploy = async (cmdOpt) => {
       execCmd(item)
     }
   }
-  // step3 上传微信并生成预览
-  const weappQRImgUrl = wxFlow(config)
+  //   step3 上传微信并生成预览
+  const weappQRImgUrl = await wxFlow(config)
   // step4 推送钉钉提醒
   Object.assign(config, { weappQRImgUrl })
   dingFlow(config)

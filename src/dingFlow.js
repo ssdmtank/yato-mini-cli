@@ -1,11 +1,13 @@
-import { formatNowDate, getGitBranchName, getGitPrevCommitMsg, getHostName, Log } from './utils'
+import { formatNowDate, getGitBranchName, getGitPrevCommitMsg, getHostName } from './utils'
+import * as spinner from './spinner'
+import fetch from 'node-fetch'
 
 const getGitInfo = () => {
   // 获取feat/fix/refactor 开头的5次提交
   const TIMES = 5
   const commitMsgs = getGitPrevCommitMsg(5)
   const branchName = getGitBranchName()
-  return `\n当前分支: **${branchName}**  \n  最近${TIMES}次commit:\n${commitMsgs}`
+  return `\n当前分支: **${branchName}**  \n  最近${TIMES}次commit:  \n  ${commitMsgs}`
 }
 
 const buildTemplate = (options) => {
@@ -17,9 +19,11 @@ const buildTemplate = (options) => {
     weappQRImgUrl &&
     `## 微信${uploadType}${isExperience ? '' : '(有效期半小时)'}：![](${weappQRImgUrl})
     `
-  return `# ${uploadType}小程序构建完成\n---\n构建时间: ${formatNowDate(
-    'MM-DD HH:mm'
-  )}  \n  构建机器：${hostName}  \n  ${gitInfo}  \n---\n${wechatPart || ''}`
+  return (
+    `# ${uploadType}小程序构建完成\n---\n构建时间: ${formatNowDate('MM-DD HH:mm')}\n` +
+    `\n  构建机器：${hostName}  \n` +
+    `${gitInfo}  \n---\n ${wechatPart || ''}`
+  )
 }
 
 /**
@@ -39,7 +43,7 @@ const dingFlow = async (options) => {
       isAtAll: isExperience,
     },
   }
-  Log.loading('正在推送钉钉消息...\n')
+  spinner.loading('正在推送钉钉消息...\n')
   try {
     await fetch(dingTalkUrl, {
       method: 'POST',
@@ -48,9 +52,9 @@ const dingFlow = async (options) => {
       },
       body: JSON.stringify(postBody),
     })
-    Log.succeed('推送钉钉消息成功\n')
+    spinner.succeed('推送钉钉消息成功')
   } catch (error) {
-    Log.error(`推送钉钉消息error ${error}`)
+    spinner.error(`推送钉钉消息error ${error}`)
   }
 }
 

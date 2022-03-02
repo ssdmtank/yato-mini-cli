@@ -2,7 +2,7 @@
     "name": "yato-mini-cli",
     "version": "0.0.1",
     "description": "taro min ci",
-    "main": "lib/index.js",
+    "main": "src/index.js",
     "bin": {
         "yato-mini-cli": "./bin/cli.js"
     },
@@ -35,9 +35,11 @@
         "deploy"
     ],
     "dependencies": {
+        "chalk": "^4.1.2",
         "commander": "^9.0.0",
         "cross-spawn": "^7.0.3",
         "dayjs": "^1.10.8",
+        "execa": "^5.1.1",
         "form-data": "^4.0.0",
         "miniprogram-ci": "^1.8.0",
         "node-fetch": "2",
@@ -56,6 +58,7 @@
         "prettier": "^2.5.1",
         "rollup": "^2.68.0",
         "rollup-plugin-copy": "^3.4.0",
+        "rollup-plugin-node-resolve": "^5.2.0",
         "webpack-merge": "^5.8.0"
     },
     "config": {

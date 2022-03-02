@@ -4,14 +4,15 @@
 var path = require('path')
 var fs = require('fs')
 var webpackMerge = require('webpack-merge')
-var ora = require('ora')
 var spawn = require('cross-spawn')
 var os = require('os')
 var dayjs = require('dayjs')
 var relativeTime = require('dayjs/plugin/relativeTime')
 require('dayjs/locale/zh-cn')
+var chalk = require('chalk')
+var ora = require('ora')
 var ci = require('miniprogram-ci')
-var fetch$1 = require('node-fetch')
+var fetch = require('node-fetch')
 var FormData = require('form-data')
 
 function _interopDefaultLegacy(e) {
@@ -20,19 +21,20 @@ function _interopDefaultLegacy(e) {
 
 var path__default = /*#__PURE__*/ _interopDefaultLegacy(path)
 var fs__default = /*#__PURE__*/ _interopDefaultLegacy(fs)
-var ora__default = /*#__PURE__*/ _interopDefaultLegacy(ora)
 var spawn__default = /*#__PURE__*/ _interopDefaultLegacy(spawn)
 var os__default = /*#__PURE__*/ _interopDefaultLegacy(os)
 var dayjs__default = /*#__PURE__*/ _interopDefaultLegacy(dayjs)
 var relativeTime__default = /*#__PURE__*/ _interopDefaultLegacy(relativeTime)
+var chalk__default = /*#__PURE__*/ _interopDefaultLegacy(chalk)
+var ora__default = /*#__PURE__*/ _interopDefaultLegacy(ora)
 var ci__default = /*#__PURE__*/ _interopDefaultLegacy(ci)
-var fetch__default = /*#__PURE__*/ _interopDefaultLegacy(fetch$1)
+var fetch__default = /*#__PURE__*/ _interopDefaultLegacy(fetch)
 var FormData__default = /*#__PURE__*/ _interopDefaultLegacy(FormData)
 
 var name = 'yato-mini-cli'
 var version = '0.0.1'
 var description = 'taro min ci'
-var main = 'lib/index.js'
+var main = 'src/index.js'
 var bin = {
   'yato-mini-cli': './bin/cli.js',
 }
@@ -58,9 +60,11 @@ var bugs = {
 var homepage = 'https://github.com/ssdmtank/yato-mini-cli#readme'
 var keywords = ['gitlab', 'wechat', 'miniprogram', 'taro', 'ci', 'deploy']
 var dependencies = {
+  chalk: '^4.1.2',
   commander: '^9.0.0',
   'cross-spawn': '^7.0.3',
   dayjs: '^1.10.8',
+  execa: '^5.1.1',
   'form-data': '^4.0.0',
   'miniprogram-ci': '^1.8.0',
   'node-fetch': '2',
@@ -79,6 +83,7 @@ var devDependencies = {
   prettier: '^2.5.1',
   rollup: '^2.68.0',
   'rollup-plugin-copy': '^3.4.0',
+  'rollup-plugin-node-resolve': '^5.2.0',
   'webpack-merge': '^5.8.0',
 }
 var config = {
@@ -108,30 +113,35 @@ var packageJson = {
   },
 }
 
+const spinner = ora__default['default']()
+
+const loading = (msg) => {
+  spinner.text = msg
+  spinner.start()
+}
+
+const succeed = (msg) => {
+  spinner.succeed(chalk__default['default'].green(`${msg} ${new Date().toLocaleString()}\n`))
+}
+
+const error = (msg) => {
+  spinner.fail(chalk__default['default'].red(`${msg} ${new Date().toLocaleString()}\n`))
+}
+
 dayjs__default['default'].locale('zh-cn')
 dayjs__default['default'].extend(relativeTime__default['default'])
 
-/**
- * 日志工具
- */
-const Log = {
-  // Log唯一的实例
-  instance: ora__default['default'](),
-  loading(msg) {
-    this.instance = ora__default['default'](msg).start()
-  },
-  stop() {
-    this.instance = this.instance.stop()
-  },
-  info(msg) {
-    this.instance = this.instance.info(msg)
-  },
-  succeed(msg) {
-    this.instance = this.instance.succeed(msg)
-  },
-  error(msg) {
-    this.instance = this.instance.fail(msg)
-  },
+// eslint-disable-next-line no-console
+const CONSOLE = console
+
+const logger = {
+  log: (msg) => CONSOLE.log(msg),
+  info: (msg) => CONSOLE.log('ℹ️ ', chalk__default['default'].blue(msg)),
+  error: (msg) =>
+    CONSOLE.error('❌ ', chalk__default['default'].red(msg), `${new Date().toLocaleString()}\n`),
+  warn: (msg) => CONSOLE.warn('⚠️ ', chalk__default['default'].yellow(msg)),
+  succeed: (msg) =>
+    CONSOLE.log('✅ ', chalk__default['default'].green(msg), `${new Date().toLocaleString()}\n`),
 }
 
 /**
@@ -142,19 +152,20 @@ const Log = {
  * @param { string } opt.desc 脚本简要
  */
 const execCmd = ({ command, args, needResp, desc }) => {
-  Log.loading(`正在${desc}\n`)
+  loading(`正在${desc}\n`)
   const data = spawn__default['default'].sync(command, args, {
     // 是否需要在当前进程输出
     stdio: needResp ? 'pipe' : 'inherit',
     cwd: process.cwd(),
   })
+
   if (data.status !== 0) {
-    Log.error(`执行命令${command}异常`)
+    error(`执行命令${command}异常`)
     // eslint-disable-next-line no-console
     console.error(data.error)
     process.exit(1)
   }
-  Log.succeed(`${desc}成功\n`)
+  succeed(`${desc}成功`)
   return data
 }
 
@@ -185,16 +196,15 @@ const getGitPrevCommitMsg = (times = 5) => {
       `${times}`,
       '--grep',
       'feat\\|fix\\|refactor',
-      '--pretty=format:"* %s (@%cn #DATE<%cd>)"',
+      '--pretty=format:* %s (@%cn #DATE<%cd>)',
     ],
     needResp: true,
     desc: '获取git提交记录',
   })
   const message = data.stdout.toString().trim()
-  message.replace(/#DATE<([^>]+)>/gi, (_, p1) => {
+  return message.replace(/#DATE<([^>]+)>/gi, (_, p1) => {
     return new dayjs__default['default'](p1).fromNow()
   })
-  return message
 }
 
 const getHostName = () => os__default['default'].hostname()
@@ -206,8 +216,8 @@ const formatNowDate = (dateFormat) => new dayjs__default['default']().format(dat
  * @param {*} privateKeyPath
  */
 const checkPrivateKey = (privateKeyPath) => {
-  if (fs__default['default'].existsSync()) {
-    Log.error(`${privateKeyPath}密钥文件不存在`)
+  if (!fs__default['default'].existsSync(privateKeyPath)) {
+    logger.error(`${privateKeyPath}密钥文件不存在`)
     process.exit(1)
   }
 }
@@ -219,11 +229,13 @@ const checkPrivateKey = (privateKeyPath) => {
 const generateVersion = (ver) => {
   // 假设分支是v + 版本号
   const version = ver || getGitBranchName().replace('v', '')
+  console.log(version, 'version')
   // 校验版本号
   if (!/^([1-9]\d|[1-9])(.([1-9]\d|\d)){2}$/.test(version)) {
-    Log.error(`版本号 ${version} 不符合规范，请检查你的分支名或配置的版本号的格式`)
+    logger.error(`版本号 ${version} 不符合规范，请检查你的分支名或配置的版本号的格式`)
     process.exit(1)
   }
+  return version
 }
 
 /**
@@ -235,10 +247,10 @@ const generateVersion = (ver) => {
 const uploadImage = async ({ qrcodeOutputDest, uploadImagUrl }) => {
   let qrcodePath = ''
   if (!uploadImagUrl) {
-    Log.error('上传图片地址uploadImagUrl未配置')
+    logger.error('上传图片地址uploadImagUrl未配置')
     return qrcodePath
   }
-  Log.loading('上传预览版二维码图片...')
+  loading('上传预览版二维码图片...')
   const form = new FormData__default['default']()
   form.append('contentType', 'image/jpeg')
   form.append(
@@ -254,9 +266,9 @@ const uploadImage = async ({ qrcodeOutputDest, uploadImagUrl }) => {
     })
     const res = await response.json()
     qrcodePath = res.code === 200 && res.data
-    Log.succeed('上传图片成功')
-  } catch (error) {
-    Log.error(`上传图片失败 :${error}`)
+    succeed('上传图片成功')
+  } catch (error$1) {
+    error(`上传图片失败 :${error$1}`)
   }
   return qrcodePath
 }
@@ -282,7 +294,7 @@ const wxFlow = async (options) => {
   checkPrivateKey(privateKeyPath)
   // 设定提交的版本
   const version = generateVersion(options.version)
-  Log.loading(`正在上传${isExperience ? '体验版' : '预览版'}...`)
+  logger.info(`正在上传${isExperience ? '体验版' : '预览版'}...`)
   try {
     const project = new ci__default['default'].Project({ appid, type, projectPath, privateKeyPath })
     if (isExperience) {
@@ -297,9 +309,9 @@ const wxFlow = async (options) => {
         qrcodeOutputDest,
       })
     }
-    Log.succeed('上传成功')
+    logger.succeed('上传成功')
   } catch (error) {
-    Log.error(`上传失败: ${error}`)
+    logger.error(`上传失败: ${error}`)
     process.exit(1)
   }
   // 设置二维码图片
@@ -311,7 +323,7 @@ const getGitInfo = () => {
   const TIMES = 5
   const commitMsgs = getGitPrevCommitMsg(5)
   const branchName = getGitBranchName()
-  return `\n当前分支: **${branchName}**  \n  最近${TIMES}次commit:\n${commitMsgs}`
+  return `\n当前分支: **${branchName}**  \n  最近${TIMES}次commit:  \n  ${commitMsgs}`
 }
 
 const buildTemplate = (options) => {
@@ -323,9 +335,11 @@ const buildTemplate = (options) => {
     weappQRImgUrl &&
     `## 微信${uploadType}${isExperience ? '' : '(有效期半小时)'}：![](${weappQRImgUrl})
     `
-  return `# ${uploadType}小程序构建完成\n---\n构建时间: ${formatNowDate(
-    'MM-DD HH:mm'
-  )}  \n  构建机器：${hostName}  \n  ${gitInfo}  \n---\n${wechatPart || ''}`
+  return (
+    `# ${uploadType}小程序构建完成\n---\n构建时间: ${formatNowDate('MM-DD HH:mm')}\n` +
+    `\n  构建机器：${hostName}  \n` +
+    `${gitInfo}  \n---\n ${wechatPart || ''}`
+  )
 }
 
 /**
@@ -345,18 +359,18 @@ const dingFlow = async (options) => {
       isAtAll: isExperience,
     },
   }
-  Log.loading('正在推送钉钉消息...\n')
+  loading('正在推送钉钉消息...\n')
   try {
-    await fetch(dingTalkUrl, {
+    await fetch__default['default'](dingTalkUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(postBody),
     })
-    Log.succeed('推送钉钉消息成功\n')
-  } catch (error) {
-    Log.error(`推送钉钉消息error ${error}`)
+    succeed('推送钉钉消息成功')
+  } catch (error$1) {
+    error(`推送钉钉消息error ${error$1}`)
   }
 }
 
@@ -374,7 +388,7 @@ const mergeConfig = () => {
   const isExist = fs__default['default'].existsSync(targetPath)
 
   if (!isExist) {
-    Log.error(`配置文件不存在，请在根目录创建配置文件${USER_CONFIG_NAME}`)
+    logger.error(`配置文件不存在，请在根目录创建配置文件${USER_CONFIG_NAME}`)
     process.exit(1)
   }
   // 本地配置文件
@@ -398,8 +412,8 @@ const deploy = async (cmdOpt) => {
       execCmd(item)
     }
   }
-  // step3 上传微信并生成预览
-  const weappQRImgUrl = wxFlow(config)
+  //   step3 上传微信并生成预览
+  const weappQRImgUrl = await wxFlow(config)
   // step4 推送钉钉提醒
   Object.assign(config, { weappQRImgUrl })
   dingFlow(config)

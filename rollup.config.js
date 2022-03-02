@@ -1,7 +1,10 @@
-const path = require('path')
+import path from 'path'
 import commonjs from '@rollup/plugin-commonjs'
 import copy from 'rollup-plugin-copy'
-const json = require('@rollup/plugin-json')
+// import resolve from 'rollup-plugin-node-resolve'
+import json from '@rollup/plugin-json'
+
+// import json from '@rollup/plugin-json'
 
 module.exports = {
   input: path.resolve(__dirname, 'src', 'index.js'),
@@ -12,6 +15,7 @@ module.exports = {
   },
   plugins: [
     json(), //配置插件 - 将json转换为ES6模块
+    // resolve(),
     commonjs(),
     copy({
       targets: [

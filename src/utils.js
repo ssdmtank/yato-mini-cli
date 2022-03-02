@@ -1,33 +1,22 @@
-import ora from 'ora'
 import spawn from 'cross-spawn'
 import os from 'os'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/zh-cn'
+import chalk from 'chalk'
+import * as spinner from './spinner'
 dayjs.locale('zh-cn')
 dayjs.extend(relativeTime)
 
-/**
- * 日志工具
- */
-export const Log = {
-  // Log唯一的实例
-  instance: ora(),
-  loading(msg) {
-    this.instance = ora(msg).start()
-  },
-  stop() {
-    this.instance = this.instance.stop()
-  },
-  info(msg) {
-    this.instance = this.instance.info(msg)
-  },
-  succeed(msg) {
-    this.instance = this.instance.succeed(msg)
-  },
-  error(msg) {
-    this.instance = this.instance.fail(msg)
-  },
+// eslint-disable-next-line no-console
+const CONSOLE = console
+
+export const logger = {
+  log: (msg) => CONSOLE.log(msg),
+  info: (msg) => CONSOLE.log('ℹ️ ', chalk.blue(msg)),
+  error: (msg) => CONSOLE.error('❌ ', chalk.red(msg), `${new Date().toLocaleString()}\n`),
+  warn: (msg) => CONSOLE.warn('⚠️ ', chalk.yellow(msg)),
+  succeed: (msg) => CONSOLE.log('✅ ', chalk.green(msg), `${new Date().toLocaleString()}\n`),
 }
 
 /**
@@ -38,19 +27,20 @@ export const Log = {
  * @param { string } opt.desc 脚本简要
  */
 export const execCmd = ({ command, args, needResp, desc }) => {
-  Log.loading(`正在${desc}\n`)
+  spinner.loading(`正在${desc}\n`)
   const data = spawn.sync(command, args, {
     // 是否需要在当前进程输出
     stdio: needResp ? 'pipe' : 'inherit',
     cwd: process.cwd(),
   })
+
   if (data.status !== 0) {
-    Log.error(`执行命令${command}异常`)
+    spinner.error(`执行命令${command}异常`)
     // eslint-disable-next-line no-console
     console.error(data.error)
     process.exit(1)
   }
-  Log.succeed(`${desc}成功\n`)
+  spinner.succeed(`${desc}成功`)
   return data
 }
 
@@ -81,16 +71,15 @@ export const getGitPrevCommitMsg = (times = 5) => {
       `${times}`,
       '--grep',
       'feat\\|fix\\|refactor',
-      '--pretty=format:"* %s (@%cn #DATE<%cd>)"',
+      '--pretty=format:* %s (@%cn #DATE<%cd>)',
     ],
     needResp: true,
     desc: '获取git提交记录',
   })
   const message = data.stdout.toString().trim()
-  message.replace(/#DATE<([^>]+)>/gi, (_, p1) => {
+  return message.replace(/#DATE<([^>]+)>/gi, (_, p1) => {
     return new dayjs(p1).fromNow()
   })
-  return message
 }
 
 export const getHostName = () => os.hostname()
