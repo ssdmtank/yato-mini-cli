@@ -64,7 +64,6 @@ var dependencies = {
   commander: '^9.0.0',
   'cross-spawn': '^7.0.3',
   dayjs: '^1.10.8',
-  execa: '^5.1.1',
   'form-data': '^4.0.0',
   'miniprogram-ci': '^1.8.0',
   'node-fetch': '2',
@@ -117,21 +116,41 @@ const spinner = ora__default['default']()
 
 const loading = (msg) => {
   spinner.text = msg
+  spinner.spinner = 'earth'
   spinner.start()
 }
 
 const succeed = (msg) => {
-  spinner.succeed(chalk__default['default'].green(`${msg} ${new Date().toLocaleString()}\n`))
+  spinner.stopAndPersist({
+    symbol: '✅ ',
+    text: chalk__default['default'].green(`${msg} [${new Date().toLocaleString()}]\n`),
+  })
 }
 
 const error = (msg) => {
-  spinner.fail(chalk__default['default'].red(`${msg} ${new Date().toLocaleString()}\n`))
+  spinner.stopAndPersist({
+    symbol: '❌ ',
+    text: chalk__default['default'].red(`${msg} [${new Date().toLocaleString()}]\n`),
+  })
+}
+
+const warn = (msg) => {
+  spinner.stopAndPersist({
+    symbol: '⚠️ ',
+    text: chalk__default['default'].yellow(`${msg} [${new Date().toLocaleString()}]\n`),
+  })
 }
 
 dayjs__default['default'].locale('zh-cn')
 dayjs__default['default'].extend(relativeTime__default['default'])
 
-// eslint-disable-next-line no-console
+const USER_CONFIG_NAME = 'yatoci.config.js'
+const LOCAL_CONFIG_NAME = 'base.config.js'
+const LOCAL_CONFIG_PATH = path__default['default'].resolve(
+  path__default['default'].join(__dirname, LOCAL_CONFIG_NAME)
+)
+const USER_CONFIG_PATH = path__default['default'].join(process.cwd(), USER_CONFIG_NAME)
+
 const CONSOLE = console
 
 const logger = {
@@ -143,6 +162,9 @@ const logger = {
   succeed: (msg) =>
     CONSOLE.log('✅ ', chalk__default['default'].green(msg), `${new Date().toLocaleString()}\n`),
 }
+
+/** 校验文件是否存在 */
+const checkFileExist = (path) => fs__default['default'].existsSync(path)
 
 /**
  * 执行脚本
@@ -374,28 +396,19 @@ const dingFlow = async (options) => {
   }
 }
 
-const USER_CONFIG_NAME = 'yatoci.config.js'
-const LOCAL_CONFIG_NAME = 'base.config.js'
-
 /**
  * 合并配置文件
  * @returns 合并后的配置
  */
 const mergeConfig = () => {
   // 用户配置文件
-  const targetPath = path__default['default'].join(process.cwd(), USER_CONFIG_NAME)
   // 校验用户配置是否存在
-  const isExist = fs__default['default'].existsSync(targetPath)
-
+  const isExist = checkFileExist(USER_CONFIG_PATH)
   if (!isExist) {
     logger.error(`配置文件不存在，请在根目录创建配置文件${USER_CONFIG_NAME}`)
     process.exit(1)
   }
-  // 本地配置文件
-  const localPath = path__default['default'].resolve(
-    path__default['default'].join(__dirname, LOCAL_CONFIG_NAME)
-  )
-  return webpackMerge.merge(require(localPath), require(targetPath))
+  return webpackMerge.merge(require(LOCAL_CONFIG_PATH), require(USER_CONFIG_PATH))
 }
 
 /**
@@ -419,6 +432,34 @@ const deploy = async (cmdOpt) => {
   dingFlow(config)
 }
 
+/**
+ * 复制配置文件到执行命令的根目录
+ */
+const cofyDeployCiFile = () => {
+  loading('正在初始化....')
+
+  // 先判断目标目录文件是否存在
+  if (checkFileExist(USER_CONFIG_PATH)) {
+    warn(`配置文件${USER_CONFIG_NAME}已存在，请按照文档配置！`)
+    process.exit(1)
+  }
+
+  // 复制文件
+  fs__default['default'].copyFile(LOCAL_CONFIG_PATH, USER_CONFIG_PATH, (error) => {
+    setTimeout(() => {
+      if (error) {
+        error('初始化失败')
+        process.exit(1)
+      }
+      succeed(`初始化成功，请检测配置文件${USER_CONFIG_NAME}，并按照文档配置`)
+    }, 500)
+  })
+}
+
+const init = () => {
+  cofyDeployCiFile()
+}
+
 const { Command } = require('commander')
 
 const program = new Command()
@@ -431,9 +472,9 @@ program
   .option('--env [value]', '环境类型release/prod/pre')
   .option('--ver [value]', '发布版本号')
   .option('--desc [value]', '发布简介')
-  .description('发布小程序')
-  .action(function (cmdOpt) {
-    deploy()
-  })
+  .description('发布微信小程序')
+  .action(deploy)
+
+program.command('init').description('初始化ci配置文件').action(init)
 
 program.parse(process.argv)

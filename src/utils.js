@@ -1,14 +1,20 @@
 import spawn from 'cross-spawn'
 import os from 'os'
+import fs from 'fs'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import 'dayjs/locale/zh-cn'
 import chalk from 'chalk'
+import path from 'path'
 import * as spinner from './spinner'
 dayjs.locale('zh-cn')
 dayjs.extend(relativeTime)
 
-// eslint-disable-next-line no-console
+export const USER_CONFIG_NAME = 'yatoci.config.js'
+export const LOCAL_CONFIG_NAME = 'base.config.js'
+export const LOCAL_CONFIG_PATH = path.resolve(path.join(__dirname, LOCAL_CONFIG_NAME))
+export const USER_CONFIG_PATH = path.join(process.cwd(), USER_CONFIG_NAME)
+
 const CONSOLE = console
 
 export const logger = {
@@ -18,6 +24,15 @@ export const logger = {
   warn: (msg) => CONSOLE.warn('⚠️ ', chalk.yellow(msg)),
   succeed: (msg) => CONSOLE.log('✅ ', chalk.green(msg), `${new Date().toLocaleString()}\n`),
 }
+
+/** 本地的配置文件路径 */
+export const localConfigPath = () => path.resolve(path.join(__dirname, LOCAL_CONFIG_NAME))
+
+/** 用户的配置文件路径 */
+export const userConfigPath = () => path.join(process.cwd(), USER_CONFIG_NAME)
+
+/** 校验文件是否存在 */
+export const checkFileExist = (path) => fs.existsSync(path)
 
 /**
  * 执行脚本

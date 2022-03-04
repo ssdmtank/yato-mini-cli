@@ -1,11 +1,16 @@
 import path from 'path'
 import fs from 'fs'
 import { merge } from 'webpack-merge'
-import { execCmd, logger } from './utils'
+import {
+  checkFileExist,
+  execCmd,
+  logger,
+  USER_CONFIG_PATH,
+  LOCAL_CONFIG_PATH,
+  USER_CONFIG_NAME,
+} from './utils'
 import wxFlow from './wxFlow'
 import dingFlow from './dingFlow'
-const USER_CONFIG_NAME = 'yatoci.config.js'
-const LOCAL_CONFIG_NAME = 'base.config.js'
 
 /**
  * 合并配置文件
@@ -13,17 +18,13 @@ const LOCAL_CONFIG_NAME = 'base.config.js'
  */
 const mergeConfig = () => {
   // 用户配置文件
-  const targetPath = path.join(process.cwd(), USER_CONFIG_NAME)
   // 校验用户配置是否存在
-  const isExist = fs.existsSync(targetPath)
-
+  const isExist = checkFileExist(USER_CONFIG_PATH)
   if (!isExist) {
     logger.error(`配置文件不存在，请在根目录创建配置文件${USER_CONFIG_NAME}`)
     process.exit(1)
   }
-  // 本地配置文件
-  const localPath = path.resolve(path.join(__dirname, LOCAL_CONFIG_NAME))
-  return merge(require(localPath), require(targetPath))
+  return merge(require(LOCAL_CONFIG_PATH), require(USER_CONFIG_PATH))
 }
 
 /**

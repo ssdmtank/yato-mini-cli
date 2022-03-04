@@ -5,19 +5,36 @@ const spinner = ora()
 
 const loading = (msg) => {
   spinner.text = msg
+  spinner.spinner = 'earth'
   spinner.start()
 }
 
+const info = (msg) => {
+  spinner.stopAndPersist({
+    symbol: '🎄 ',
+    text: chalk.white(`${msg} [${new Date().toLocaleString()}]\n`),
+  })
+}
+
 const succeed = (msg) => {
-  spinner.succeed(chalk.green(`${msg} ${new Date().toLocaleString()}\n`))
+  spinner.stopAndPersist({
+    symbol: '✅ ',
+    text: chalk.green(`${msg} [${new Date().toLocaleString()}]\n`),
+  })
 }
 
 const error = (msg) => {
-  spinner.fail(chalk.red(`${msg} ${new Date().toLocaleString()}\n`))
+  spinner.stopAndPersist({
+    symbol: '❌ ',
+    text: chalk.red(`${msg} [${new Date().toLocaleString()}]\n`),
+  })
 }
 
 const warn = (msg) => {
-  spinner.warn(chalk.yellow(`${msg} ${new Date().toLocaleString()}\n`))
+  spinner.stopAndPersist({
+    symbol: '⚠️ ',
+    text: chalk.yellow(`${msg} [${new Date().toLocaleString()}]\n`),
+  })
 }
 
-export { loading, succeed, error, warn }
+export { loading, succeed, error, warn, info }
