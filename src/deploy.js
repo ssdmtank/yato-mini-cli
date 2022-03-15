@@ -1,5 +1,3 @@
-import path from 'path'
-import fs from 'fs'
 import { merge } from 'webpack-merge'
 import {
   checkFileExist,
