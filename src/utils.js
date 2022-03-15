@@ -65,7 +65,8 @@ export const execCmd = ({ command, args, needResp, desc }) => {
 export const getGitBranchName = () => {
   const data = execCmd({
     command: 'git',
-    args: ['rev-parse', '--abbrev-ref', 'HEAD'],
+    args: ['symbolic-ref', '--short', 'HEAD'],
+    // args: ['rev-parse', '--abbrev-ref', 'HEAD'],
     desc: '查询git分支名称',
     needResp: true,
   })

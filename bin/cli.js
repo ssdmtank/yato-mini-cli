@@ -1,15 +1,15 @@
 #!/usr/bin/env node
 'use strict'
 
-var path = require('path')
-var fs = require('fs')
 var webpackMerge = require('webpack-merge')
 var spawn = require('cross-spawn')
 var os = require('os')
+var fs = require('fs')
 var dayjs = require('dayjs')
 var relativeTime = require('dayjs/plugin/relativeTime')
 require('dayjs/locale/zh-cn')
 var chalk = require('chalk')
+var path = require('path')
 var ora = require('ora')
 var ci = require('miniprogram-ci')
 var fetch = require('node-fetch')
@@ -19,20 +19,20 @@ function _interopDefaultLegacy(e) {
   return e && typeof e === 'object' && 'default' in e ? e : { default: e }
 }
 
-var path__default = /*#__PURE__*/ _interopDefaultLegacy(path)
-var fs__default = /*#__PURE__*/ _interopDefaultLegacy(fs)
 var spawn__default = /*#__PURE__*/ _interopDefaultLegacy(spawn)
 var os__default = /*#__PURE__*/ _interopDefaultLegacy(os)
+var fs__default = /*#__PURE__*/ _interopDefaultLegacy(fs)
 var dayjs__default = /*#__PURE__*/ _interopDefaultLegacy(dayjs)
 var relativeTime__default = /*#__PURE__*/ _interopDefaultLegacy(relativeTime)
 var chalk__default = /*#__PURE__*/ _interopDefaultLegacy(chalk)
+var path__default = /*#__PURE__*/ _interopDefaultLegacy(path)
 var ora__default = /*#__PURE__*/ _interopDefaultLegacy(ora)
 var ci__default = /*#__PURE__*/ _interopDefaultLegacy(ci)
 var fetch__default = /*#__PURE__*/ _interopDefaultLegacy(fetch)
 var FormData__default = /*#__PURE__*/ _interopDefaultLegacy(FormData)
 
 var name = 'yato-mini-cli'
-var version = '0.0.1'
+var version = '0.0.3'
 var description = 'taro min ci'
 var main = 'src/index.js'
 var bin = {
@@ -42,7 +42,8 @@ var scripts = {
   dev: 'rollup -w -c',
   build: 'rollup -c',
   prepare: 'husky install',
-  commit: 'git add . && git-cz',
+  gitpush: 'branch_name=$(git symbolic-ref --short -q HEAD) &&  git push origin $branch_name',
+  commit: 'git add . && git-cz && gitpush',
   changelog: 'conventional-changelog -p -i CHANGELOG.md -s -r 0',
 }
 var engines = {
@@ -68,6 +69,7 @@ var dependencies = {
   'miniprogram-ci': '^1.8.0',
   'node-fetch': '2',
   ora: '^5.0.0',
+  'webpack-merge': '^5.8.0',
 }
 var devDependencies = {
   '@commitlint/cli': '^16.2.1',
@@ -83,7 +85,6 @@ var devDependencies = {
   rollup: '^2.68.0',
   'rollup-plugin-copy': '^3.4.0',
   'rollup-plugin-node-resolve': '^5.2.0',
-  'webpack-merge': '^5.8.0',
 }
 var config = {
   commitizen: {
@@ -197,7 +198,8 @@ const execCmd = ({ command, args, needResp, desc }) => {
 const getGitBranchName = () => {
   const data = execCmd({
     command: 'git',
-    args: ['rev-parse', '--abbrev-ref', 'HEAD'],
+    args: ['symbolic-ref', '--short', 'HEAD'],
+    // args: ['rev-parse', '--abbrev-ref', 'HEAD'],
     desc: '查询git分支名称',
     needResp: true,
   })
