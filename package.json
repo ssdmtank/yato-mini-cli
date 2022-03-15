@@ -11,7 +11,7 @@
         "build": "rollup -c",
         "prepare": "husky install",
         "gitpush": "branch_name=$(git symbolic-ref --short -q HEAD) &&  git push origin $branch_name",
-        "commit": "git add . && git-cz && gitpush",
+        "commit": "git add . && git-cz && yarn gitpush",
         "changelog": "conventional-changelog -p -i CHANGELOG.md -s -r 0"
     },
     "engines": {
