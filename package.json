@@ -1,6 +1,6 @@
 {
     "name": "yato-mini-cli",
-    "version": "0.0.7",
+    "version": "0.0.10",
     "description": "taro min ci",
     "main": "src/index.js",
     "bin": {
@@ -13,7 +13,8 @@
         "gitpush": "branch_name=$(git symbolic-ref --short -q HEAD) &&  git push origin $branch_name",
         "commit": "git add . && git-cz && yarn gitpush",
         "changelog": "conventional-changelog -p -i CHANGELOG.md -s -r 0",
-        "pub": "npm version patch && npm publish"
+        "pub": "yarn build && npm version patch && npm publish --access=public",
+        "test": "standard-version --tag-prefix stable-"
     },
     "engines": {
         "node": ">=v12"
@@ -60,7 +61,8 @@
         "prettier": "^2.5.1",
         "rollup": "^2.68.0",
         "rollup-plugin-copy": "^3.4.0",
-        "rollup-plugin-node-resolve": "^5.2.0"
+        "rollup-plugin-node-resolve": "^5.2.0",
+        "standard-version": "^9.3.2"
     },
     "config": {
         "commitizen": {
