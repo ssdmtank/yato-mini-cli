@@ -15,7 +15,8 @@
         "changelog": "conventional-changelog -p -i CHANGELOG.md -s -r 0",
         "pub": "yarn build && npm version patch && npm publish --access=public",
         "release": "standard-version -t $(date +release-%Y%m%d-v)",
-        "test": "standard-version --tag-prefix"
+        "np": "np",
+        "test": "node scripts/publish.js"
     },
     "engines": {
         "node": ">=v12"
@@ -58,12 +59,13 @@
         "conventional-changelog-cli": "^2.2.2",
         "eslint": "^8.9.0",
         "husky": "^7.0.4",
+        "inquirer": "^8.2.1",
         "lint-staged": "^12.3.4",
+        "np": "^7.6.0",
         "prettier": "^2.5.1",
         "rollup": "^2.68.0",
         "rollup-plugin-copy": "^3.4.0",
-        "rollup-plugin-node-resolve": "^5.2.0",
-        "standard-version": "^9.3.2"
+        "rollup-plugin-node-resolve": "^5.2.0"
     },
     "config": {
         "commitizen": {

@@ -32,7 +32,7 @@ var fetch__default = /*#__PURE__*/ _interopDefaultLegacy(fetch)
 var FormData__default = /*#__PURE__*/ _interopDefaultLegacy(FormData)
 
 var name = 'yato-mini-cli'
-var version = '0.0.3'
+var version = '0.0.12'
 var description = 'taro min ci'
 var main = 'src/index.js'
 var bin = {
@@ -45,6 +45,10 @@ var scripts = {
   gitpush: 'branch_name=$(git symbolic-ref --short -q HEAD) &&  git push origin $branch_name',
   commit: 'git add . && git-cz && yarn gitpush',
   changelog: 'conventional-changelog -p -i CHANGELOG.md -s -r 0',
+  pub: 'yarn build && npm version patch && npm publish --access=public',
+  release: 'standard-version -t $(date +release-%Y%m%d-v)',
+  np: 'np',
+  test: 'node scripts/publish.js',
 }
 var engines = {
   node: '>=v12',
@@ -80,7 +84,9 @@ var devDependencies = {
   'conventional-changelog-cli': '^2.2.2',
   eslint: '^8.9.0',
   husky: '^7.0.4',
+  inquirer: '^8.2.1',
   'lint-staged': '^12.3.4',
+  np: '^7.6.0',
   prettier: '^2.5.1',
   rollup: '^2.68.0',
   'rollup-plugin-copy': '^3.4.0',
@@ -183,7 +189,7 @@ const execCmd = ({ command, args, needResp, desc }) => {
   })
 
   if (data.status !== 0) {
-    error(`执行命令${command}异常`)
+    error(`执行命令${command}${args}异常`)
     // eslint-disable-next-line no-console
     console.error(data.error)
     process.exit(1)
@@ -195,11 +201,13 @@ const execCmd = ({ command, args, needResp, desc }) => {
 /**
  * @returns git分支名称
  */
-const getGitBranchName = () => {
+const getGitBranchName = () => getGitBranchNameInJenkins() || getGitBranchNameByLocal()
+
+const getGitBranchNameByLocal = () => {
   const data = execCmd({
     command: 'git',
-    args: ['symbolic-ref', '--short', 'HEAD'],
-    // args: ['rev-parse', '--abbrev-ref', 'HEAD'],
+    // args: ['symbolic-ref', '--short', 'HEAD'],
+    args: ['rev-parse', '--abbrev-ref', 'HEAD'],
     desc: '查询git分支名称',
     needResp: true,
   })
@@ -361,8 +369,8 @@ const wxFlow = async (options) => {
 const getGitInfo = () => {
   // 获取feat/fix/refactor 开头的5次提交
   const TIMES = 5
-  const commitMsgs = getGitPrevCommitMsg(5)
   const branchName = getGitBranchName()
+  const commitMsgs = getGitPrevCommitMsg(5)
   return `\n当前分支: **${branchName}**  \n  最近${TIMES}次commit:  \n  ${commitMsgs}`
 }
 
