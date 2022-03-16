@@ -50,7 +50,7 @@ export const execCmd = ({ command, args, needResp, desc }) => {
   })
 
   if (data.status !== 0) {
-    spinner.error(`执行命令${command}异常`)
+    spinner.error(`执行命令${command}${args}异常`)
     // eslint-disable-next-line no-console
     console.error(data.error)
     process.exit(1)

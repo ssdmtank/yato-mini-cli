@@ -5,8 +5,8 @@ import fetch from 'node-fetch'
 const getGitInfo = () => {
   // 获取feat/fix/refactor 开头的5次提交
   const TIMES = 5
-  const commitMsgs = getGitPrevCommitMsg(5)
   const branchName = getGitBranchName()
+  const commitMsgs = getGitPrevCommitMsg(5)
   return `\n当前分支: **${branchName}**  \n  最近${TIMES}次commit:  \n  ${commitMsgs}`
 }
 
