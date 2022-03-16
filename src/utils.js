@@ -62,11 +62,13 @@ export const execCmd = ({ command, args, needResp, desc }) => {
 /**
  * @returns git分支名称
  */
-export const getGitBranchName = () => {
+export const getGitBranchName = () => getGitBranchNameInJenkins() || getGitBranchNameByLocal()
+
+export const getGitBranchNameByLocal = () => {
   const data = execCmd({
     command: 'git',
-    args: ['symbolic-ref', '--short', 'HEAD'],
-    // args: ['rev-parse', '--abbrev-ref', 'HEAD'],
+    // args: ['symbolic-ref', '--short', 'HEAD'],
+    args: ['rev-parse', '--abbrev-ref', 'HEAD'],
     desc: '查询git分支名称',
     needResp: true,
   })
