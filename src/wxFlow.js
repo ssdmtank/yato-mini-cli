@@ -3,7 +3,7 @@ import path from 'path'
 import ci from 'miniprogram-ci'
 import fetch from 'node-fetch'
 import FormData from 'form-data'
-import { getGitBranchName, logger } from './utils'
+import { getGitBranchName, getGitBranchNameInJenkins, logger } from './utils'
 import * as spinner from './spinner'
 
 /**
@@ -23,7 +23,8 @@ const checkPrivateKey = (privateKeyPath) => {
  */
 const generateVersion = (ver) => {
   // 假设分支是v + 版本号
-  const version = ver || getGitBranchName().replace('v', '')
+  const version =
+    ver || getGitBranchNameInJenkins().replace('v', '') || getGitBranchName().replace('v', '')
   console.log(version, 'version')
   // 校验版本号
   if (!/^([1-9]\d|[1-9])(.([1-9]\d|\d)){2}$/.test(version)) {

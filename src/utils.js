@@ -74,6 +74,21 @@ export const getGitBranchName = () => {
 }
 
 /**
+ * 在jenkins git分离环境下获取git版本
+ */
+export const getGitBranchNameInJenkins = () => {
+  const data = execCmd({
+    command: 'git',
+    args: ['name-rev', '--name-only', 'HEAD'],
+    desc: '查询git分支名称',
+    needResp: true,
+  })
+  const gitName = data.stdout.toString().trim()
+  // 'remotes/origin/v2.4.0' / 'v2.4.0' 截取最后
+  return gitName.split('/')[gitName.split('/').length - 1]
+}
+
+/**
  * 获取feat/fix/refactor 开头的times次提交
  * @param {*} times 次数
  */

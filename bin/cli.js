@@ -207,6 +207,21 @@ const getGitBranchName = () => {
 }
 
 /**
+ * 在jenkins git分离环境下获取git版本
+ */
+const getGitBranchNameInJenkins = () => {
+  const data = execCmd({
+    command: 'git',
+    args: ['name-rev', '--name-only', 'HEAD'],
+    desc: '查询git分支名称',
+    needResp: true,
+  })
+  const gitName = data.stdout.toString().trim()
+  // 'remotes/origin/v2.4.0' / 'v2.4.0' 截取最后
+  return gitName.split('/')[gitName.split('/').length - 1]
+}
+
+/**
  * 获取feat/fix/refactor 开头的times次提交
  * @param {*} times 次数
  */
@@ -252,7 +267,8 @@ const checkPrivateKey = (privateKeyPath) => {
  */
 const generateVersion = (ver) => {
   // 假设分支是v + 版本号
-  const version = ver || getGitBranchName().replace('v', '')
+  const version =
+    ver || getGitBranchNameInJenkins().replace('v', '') || getGitBranchName().replace('v', '')
   console.log(version, 'version')
   // 校验版本号
   if (!/^([1-9]\d|[1-9])(.([1-9]\d|\d)){2}$/.test(version)) {
