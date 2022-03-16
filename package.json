@@ -1,6 +1,6 @@
 {
     "name": "yato-mini-cli",
-    "version": "0.0.10",
+    "version": "0.0.11",
     "description": "taro min ci",
     "main": "src/index.js",
     "bin": {
@@ -14,7 +14,8 @@
         "commit": "git add . && git-cz && yarn gitpush",
         "changelog": "conventional-changelog -p -i CHANGELOG.md -s -r 0",
         "pub": "yarn build && npm version patch && npm publish --access=public",
-        "test": "standard-version --tag-prefix stable-"
+        "release": "standard-version -t $(date +release-%Y%m%d-v)",
+        "test": "standard-version --tag-prefix"
     },
     "engines": {
         "node": ">=v12"
