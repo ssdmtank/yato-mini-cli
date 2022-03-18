@@ -81,7 +81,8 @@ export const getGitBranchNameByLocal = () => {
 export const getGitBranchNameInJenkins = () => {
   const data = execCmd({
     command: 'git',
-    args: ['name-rev', '--name-only', 'HEAD'],
+    args: ['branch', '--show-current'],
+    // args: ['name-rev', '--name-only', 'HEAD'],
     desc: '查询git分支名称',
     needResp: true,
   })

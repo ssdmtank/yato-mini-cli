@@ -33,6 +33,8 @@ const deploy = async (cmdOpt) => {
   // step1 读取配置文件
   // TODO 合并命令行的配置
   const config = mergeConfig()
+  // 合并命令行的配置
+  Object.assign(config, cmdOpt)
   // step2 安装依赖及编译
   if (config.preCommand && config.preCommand.length > 0) {
     for (const item of config.preCommand) {

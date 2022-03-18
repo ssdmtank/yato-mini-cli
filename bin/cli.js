@@ -32,7 +32,7 @@ var fetch__default = /*#__PURE__*/ _interopDefaultLegacy(fetch)
 var FormData__default = /*#__PURE__*/ _interopDefaultLegacy(FormData)
 
 var name = 'yato-mini-cli'
-var version = '0.0.3'
+var version = '0.0.10'
 var description = 'taro min ci'
 var main = 'src/index.js'
 var bin = {
@@ -45,6 +45,8 @@ var scripts = {
   gitpush: 'branch_name=$(git symbolic-ref --short -q HEAD) &&  git push origin $branch_name',
   commit: 'git add . && git-cz && yarn gitpush',
   changelog: 'conventional-changelog -p -i CHANGELOG.md -s -r 0',
+  pub: 'yarn build && npm version patch && npm publish --access=public',
+  test: 'standard-version --tag-prefix stable-',
 }
 var engines = {
   node: '>=v12',
@@ -85,6 +87,7 @@ var devDependencies = {
   rollup: '^2.68.0',
   'rollup-plugin-copy': '^3.4.0',
   'rollup-plugin-node-resolve': '^5.2.0',
+  'standard-version': '^9.3.2',
 }
 var config = {
   commitizen: {
@@ -183,7 +186,7 @@ const execCmd = ({ command, args, needResp, desc }) => {
   })
 
   if (data.status !== 0) {
-    error(`执行命令${command}异常`)
+    error(`执行命令${command}${args}异常`)
     // eslint-disable-next-line no-console
     console.error(data.error)
     process.exit(1)
@@ -195,11 +198,13 @@ const execCmd = ({ command, args, needResp, desc }) => {
 /**
  * @returns git分支名称
  */
-const getGitBranchName = () => {
+const getGitBranchName = () => getGitBranchNameInJenkins() || getGitBranchNameByLocal()
+
+const getGitBranchNameByLocal = () => {
   const data = execCmd({
     command: 'git',
-    args: ['symbolic-ref', '--short', 'HEAD'],
-    // args: ['rev-parse', '--abbrev-ref', 'HEAD'],
+    // args: ['symbolic-ref', '--short', 'HEAD'],
+    args: ['rev-parse', '--abbrev-ref', 'HEAD'],
     desc: '查询git分支名称',
     needResp: true,
   })
@@ -212,7 +217,8 @@ const getGitBranchName = () => {
 const getGitBranchNameInJenkins = () => {
   const data = execCmd({
     command: 'git',
-    args: ['name-rev', '--name-only', 'HEAD'],
+    args: ['branch', '--show-current'],
+    // args: ['name-rev', '--name-only', 'HEAD'],
     desc: '查询git分支名称',
     needResp: true,
   })
@@ -358,18 +364,18 @@ const wxFlow = async (options) => {
   return isExperience ? qrcodeImageUrl : uploadImage({ qrcodeOutputDest, uploadImagUrl })
 }
 
-const getGitInfo = () => {
+const getGitInfo = (env) => {
   // 获取feat/fix/refactor 开头的5次提交
   const TIMES = 5
+  const branchName = env || getGitBranchName()
   const commitMsgs = getGitPrevCommitMsg(5)
-  const branchName = getGitBranchName()
   return `\n当前分支: **${branchName}**  \n  最近${TIMES}次commit:  \n  ${commitMsgs}`
 }
 
 const buildTemplate = (options) => {
   const { weappQRImgUrl, isExperience } = options
   const uploadType = isExperience ? '体验版' : '预览版'
-  const gitInfo = getGitInfo()
+  const gitInfo = getGitInfo(options.env)
   const hostName = getHostName()
   const wechatPart =
     weappQRImgUrl &&
@@ -437,6 +443,8 @@ const deploy = async (cmdOpt) => {
   // step1 读取配置文件
   // TODO 合并命令行的配置
   const config = mergeConfig()
+  // 合并命令行的配置
+  Object.assign(config, cmdOpt)
   // step2 安装依赖及编译
   if (config.preCommand && config.preCommand.length > 0) {
     for (const item of config.preCommand) {
