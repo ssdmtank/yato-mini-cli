@@ -2,10 +2,10 @@ import { formatNowDate, getGitBranchName, getGitPrevCommitMsg, getHostName } fro
 import * as spinner from './spinner'
 import fetch from 'node-fetch'
 
-const getGitInfo = () => {
+const getGitInfo = (env) => {
   // 获取feat/fix/refactor 开头的5次提交
   const TIMES = 5
-  const branchName = getGitBranchName()
+  const branchName = env || getGitBranchName()
   const commitMsgs = getGitPrevCommitMsg(5)
   return `\n当前分支: **${branchName}**  \n  最近${TIMES}次commit:  \n  ${commitMsgs}`
 }
@@ -13,7 +13,7 @@ const getGitInfo = () => {
 const buildTemplate = (options) => {
   const { weappQRImgUrl, isExperience } = options
   const uploadType = isExperience ? '体验版' : '预览版'
-  const gitInfo = getGitInfo()
+  const gitInfo = getGitInfo(options.env)
   const hostName = getHostName()
   const wechatPart =
     weappQRImgUrl &&

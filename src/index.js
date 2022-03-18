@@ -10,7 +10,7 @@ program
 
 program
   .command('deploy')
-  .option('--env [value]', '环境类型release/prod/pre')
+  .option('--env [value]', '环境类型dev/test/pre/prod')
   .option('--ver [value]', '发布版本号')
   .option('--desc [value]', '发布简介')
   .description('发布微信小程序')

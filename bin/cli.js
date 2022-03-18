@@ -220,7 +220,8 @@ const getGitBranchNameByLocal = () => {
 const getGitBranchNameInJenkins = () => {
   const data = execCmd({
     command: 'git',
-    args: ['name-rev', '--name-only', 'HEAD'],
+    args: ['branch', '--show-current'],
+    // args: ['name-rev', '--name-only', 'HEAD'],
     desc: '查询git分支名称',
     needResp: true,
   })
@@ -366,10 +367,10 @@ const wxFlow = async (options) => {
   return isExperience ? qrcodeImageUrl : uploadImage({ qrcodeOutputDest, uploadImagUrl })
 }
 
-const getGitInfo = () => {
+const getGitInfo = (env) => {
   // 获取feat/fix/refactor 开头的5次提交
   const TIMES = 5
-  const branchName = getGitBranchName()
+  const branchName = env || getGitBranchName()
   const commitMsgs = getGitPrevCommitMsg(5)
   return `\n当前分支: **${branchName}**  \n  最近${TIMES}次commit:  \n  ${commitMsgs}`
 }
@@ -377,7 +378,7 @@ const getGitInfo = () => {
 const buildTemplate = (options) => {
   const { weappQRImgUrl, isExperience } = options
   const uploadType = isExperience ? '体验版' : '预览版'
-  const gitInfo = getGitInfo()
+  const gitInfo = getGitInfo(options.env)
   const hostName = getHostName()
   const wechatPart =
     weappQRImgUrl &&
@@ -443,8 +444,9 @@ const mergeConfig = () => {
  */
 const deploy = async (cmdOpt) => {
   // step1 读取配置文件
-  // TODO 合并命令行的配置
   const config = mergeConfig()
+  // 合并命令行的配置
+  Object.assign(config, cmdOpt)
   // step2 安装依赖及编译
   if (config.preCommand && config.preCommand.length > 0) {
     for (const item of config.preCommand) {
@@ -495,7 +497,7 @@ program
 
 program
   .command('deploy')
-  .option('--env [value]', '环境类型release/prod/pre')
+  .option('--env [value]', '环境类型dev/test/pre/prod')
   .option('--ver [value]', '发布版本号')
   .option('--desc [value]', '发布简介')
   .description('发布微信小程序')
