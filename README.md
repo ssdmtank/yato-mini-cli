@@ -82,4 +82,4 @@ yarn dev
 
 其他参考[小程序实现ci - Taro微信小程序自动化部署](!https://juejin.cn/post/7069070842499432479)
 
-1
+2
