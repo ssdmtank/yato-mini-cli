@@ -376,7 +376,7 @@ const getGitInfo = (env) => {
 }
 
 const buildTemplate = (options) => {
-  const { weappQRImgUrl, isExperience } = options
+  const { weappQRImgUrl, isExperience, dingTalkTitle } = options
   const uploadType = isExperience ? '体验版' : '预览版'
   const gitInfo = getGitInfo(options.env)
   const hostName = getHostName()
@@ -385,7 +385,9 @@ const buildTemplate = (options) => {
     `## 微信${uploadType}${isExperience ? '' : '(有效期半小时)'}：![](${weappQRImgUrl})
     `
   return (
-    `# ${uploadType}小程序构建完成\n---\n构建时间: ${formatNowDate('MM-DD HH:mm')}\n` +
+    `# ${dingTalkTitle}小程序${uploadType}构建完成\n---\n构建时间: ${formatNowDate(
+      'MM-DD HH:mm'
+    )}\n` +
     `\n  构建机器：${hostName}  \n` +
     `${gitInfo}  \n---\n ${wechatPart || ''}`
   )

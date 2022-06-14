@@ -37,4 +37,5 @@ module.exports = {
   version: '', // 自定义版本号
   qrcodeFormat: 'image', // 返回二维码文件的格式 "image" 或 "base64"， 默认值 "terminal" 供调试用
   qrcodeOutputDest: 'wechat-preview.jpg', // 二维码文件保存路径
+  dingTalkTitle: '', // 钉钉推送消息标题
 }
