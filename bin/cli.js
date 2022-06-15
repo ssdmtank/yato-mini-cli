@@ -201,7 +201,7 @@ const execCmd = ({ command, args, needResp, desc }) => {
 /**
  * @returns git分支名称
  */
-const getGitBranchName = () => getGitBranchNameInJenkins() || getGitBranchNameByLocal()
+const getGitBranchName = () => getGitBranchNameByLocal() || getGitBranchNameInJenkins()
 
 const getGitBranchNameByLocal = () => {
   const data = execCmd({

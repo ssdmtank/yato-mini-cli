@@ -62,7 +62,7 @@ export const execCmd = ({ command, args, needResp, desc }) => {
 /**
  * @returns git分支名称
  */
-export const getGitBranchName = () => getGitBranchNameInJenkins() || getGitBranchNameByLocal()
+export const getGitBranchName = () => getGitBranchNameByLocal() || getGitBranchNameInJenkins()
 
 export const getGitBranchNameByLocal = () => {
   const data = execCmd({
