@@ -1,6 +1,6 @@
 {
     "name": "yato-mini-cli",
-    "version": "0.0.12",
+    "version": "0.0.13",
     "description": "taro min ci",
     "main": "src/index.js",
     "bin": {
